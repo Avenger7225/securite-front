@@ -35,6 +35,7 @@ export default function Tabs() {
         name="Home" 
         component={HomeScreen} 
         options={{
+            headerShown: false,
             tabBarIcon: ({ focused }) => (
               <Ionicons name="star" size={30} color={focused ? 'blue' : 'gray'} />
             ),
@@ -44,6 +45,7 @@ export default function Tabs() {
         name="Profile" 
         component={ProfileScreen} 
         options={{
+            headerShown: false,
             tabBarIcon: ({ focused }) => (
               <Ionicons name="person" size={30} color={focused ? 'blue' : 'gray'} />
             ),
@@ -53,6 +55,7 @@ export default function Tabs() {
         name="Family" 
         component={FamilyScreen} 
         options={{
+            headerShown: false,
             tabBarIcon: ({ focused }) => (
               <Ionicons name="people" size={30} color={focused ? 'blue' : 'gray'} />
             ),
