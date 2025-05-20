@@ -8,24 +8,10 @@ export default function ProfileScreen() {
   const { location } = useContext(UbicacionContext);
   
   // Estado para controlar si el menú está visible
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [isMenuVisible] = useState(true);
   
   // Hook de navegación
   const navigation = useNavigation();
-
-  // Función para alternar la visibilidad del menú
-  const toggleMenu = () => {
-    setIsMenuVisible(!isMenuVisible);
-  };
-
-  // Cerrar el menú cuando se cambie de pantalla
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('blur', () => {
-      setIsMenuVisible(false);
-    });
-
-    return unsubscribe;
-  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -35,16 +21,16 @@ export default function ProfileScreen() {
         <Text>Obteniendo ubicación...</Text>
       )}
 
-      <TouchableOpacity onPress={toggleMenu} style={styles.openButton}>
-        <Text style={styles.openButtonText}>Abrir Menú Familiar</Text>
-      </TouchableOpacity>
-
       {isMenuVisible && (
         <View style={styles.menu}>
           <View style={styles.menuContent}>
-            <Text style={styles.sheetText}>Menú Deslizante</Text>
-            <Text style={styles.sheetText}>Opción 1</Text>
-            <Text style={styles.sheetText}>Opción 2</Text>
+            <Text style={styles.sheetText}>Menú Usuario</Text>
+            <TouchableOpacity style={styles.button} onPress={()=>{}}>
+              <Text style={styles.buttonText}>Opcion 1</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={()=>{}}>
+              <Text style={styles.buttonText}>Opcion 2</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -57,26 +43,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  openButton: {
-    position: 'absolute',
-    marginLeft: -50,
-    bottom: 100,
-    left: '50%',
-    transform: [{ translateX: -50 }],
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-  },
-  openButtonText: {
-    color: 'white',
-    fontSize: 18,
-  },
   menu: {
     position: 'absolute',
-    bottom: 180,
+    height: 350,
+    bottom: 90,
     left: 0,
     right: 0,
-    backgroundColor: 'white',
+    backgroundColor: '#042C6B',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -86,8 +59,20 @@ const styles = StyleSheet.create({
   menuContent: {
     alignItems: 'center',
   },
+  button: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    width: 220,
+    marginBottom: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'black'
+  },
   sheetText: {
     fontSize: 18,
     marginBottom: 20,
+    color: 'white'
   },
 });

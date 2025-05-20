@@ -16,19 +16,19 @@ export default function RegisterScreen({ navigation }: any) {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="user name"
+          placeholder="User name"
           placeholderTextColor="#ccc"
           secureTextEntry={true}
         />
         <TextInput
           style={styles.input}
-          placeholder="example@email.com"
+          placeholder="Example@email.com"
           placeholderTextColor="#ccc"
           keyboardType="email-address"
         />
         <TextInput
           style={styles.input}
-          placeholder="phone number"
+          placeholder="Phone number"
           placeholderTextColor="#ccc"
           keyboardType="numeric"
         />
@@ -38,8 +38,14 @@ export default function RegisterScreen({ navigation }: any) {
           placeholderTextColor="#ccc"
           secureTextEntry={true}
         />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm password"
+          placeholderTextColor="#ccc"
+          secureTextEntry={true}
+        />
         <TouchableOpacity style={styles.button} onPress={() => navigation.replace('Tabs')}>
-          <Text style={styles.buttonText}>Sign Up</Text>
+          <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
       </View>
 
