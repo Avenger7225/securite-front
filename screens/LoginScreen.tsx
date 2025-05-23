@@ -1,7 +1,40 @@
-import { Text, View, Image, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { Text, View, Image, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+
 const logo = require('../assets/securite-logo.jpeg');
 
 export default function LoginScreen({ navigation }: any) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://192.168.0.133:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Bienvenido', `Hola ${data.username}`);
+
+        // 💾 Aquí podrías guardar el token si vas a usarlo en futuras peticiones
+        // Por ejemplo con AsyncStorage
+
+        navigation.replace('Tabs');
+      } else {
+        Alert.alert('Error', data.error || 'Error desconocido');
+      }
+    } catch (error) {
+      console.error('Error de conexión:', error);
+      Alert.alert('Error', 'No se pudo conectar al servidor');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
@@ -14,20 +47,28 @@ export default function LoginScreen({ navigation }: any) {
           placeholder="example@email.com"
           placeholderTextColor="#ccc"
           keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}
           placeholder="Password"
           placeholderTextColor="#ccc"
           secureTextEntry={true}
+          value={password}
+          onChangeText={setPassword}
         />
         <TouchableOpacity style={styles.button} onPress={() => navigation.replace('Tabs')}>
           <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.footerText} onPress={() => navigation.navigate('ForgotPassword')}>Forgot your password?</Text>
-      <Text style={styles.footerText} onPress={() => navigation.navigate('Register')}>Don't have an account? Sign up</Text>
+      <Text style={styles.footerText} onPress={() => navigation.navigate('ForgotPassword')}>
+        Forgot your password?
+      </Text>
+      <Text style={styles.footerText} onPress={() => navigation.navigate('Register')}>
+        Don't have an account? Sign up
+      </Text>
     </View>
   );
 }

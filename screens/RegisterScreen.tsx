@@ -1,9 +1,62 @@
-import { StyleSheet, Text, Image, TextInput, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, Image, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import React, { useState } from 'react';
 
 const logo = require('../assets/securite-logo.jpeg');
 
 export default function RegisterScreen({ navigation }: any) {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.0.133:3000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username,
+          phone_number: phoneNumber,
+          email: email,
+          password_u: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 201) {
+        Alert.alert('Éxito', 'Usuario creado con éxito');
+        navigation.replace('Login');
+      } else {
+        // --- MODIFICACIÓN CLAVE AQUÍ ---
+        let errorMessage = 'Ocurrió un error desconocido';
+        if (data && typeof data.error === 'string') {
+          errorMessage = data.error;
+        } else if (data && typeof data.detail === 'string') { // Assuming your backend might return 'detail' as a string for errors
+          errorMessage = data.detail;
+        } else if (data) {
+          // If data.error or data.detail are objects, stringify the whole data object for debugging
+          errorMessage = JSON.stringify(data);
+        }
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error: any) { // Explicitly type error as any for console.error
+      console.error('Error en la conexión o en la solicitud:', error);
+      // For network errors or unexpected exceptions, error might not be an object with .message
+      let alertMessage = 'No se pudo conectar con la API';
+      if (error && typeof error.message === 'string') {
+        alertMessage += `: ${error.message}`;
+      }
+      Alert.alert('Error', alertMessage);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -18,38 +71,49 @@ export default function RegisterScreen({ navigation }: any) {
           style={styles.input}
           placeholder="User name"
           placeholderTextColor="#ccc"
-          secureTextEntry={true}
+          onChangeText={setUsername}
+          value={username}
         />
         <TextInput
           style={styles.input}
           placeholder="Example@email.com"
           placeholderTextColor="#ccc"
           keyboardType="email-address"
+          onChangeText={setEmail}
+          value={email}
         />
         <TextInput
           style={styles.input}
           placeholder="Phone number"
           placeholderTextColor="#ccc"
           keyboardType="numeric"
+          onChangeText={setPhoneNumber}
+          value={phoneNumber}
         />
         <TextInput
           style={styles.input}
           placeholder="Password"
           placeholderTextColor="#ccc"
-          secureTextEntry={true}
+          secureTextEntry
+          onChangeText={setPassword}
+          value={password}
         />
         <TextInput
           style={styles.input}
           placeholder="Confirm password"
           placeholderTextColor="#ccc"
-          secureTextEntry={true}
+          secureTextEntry
+          onChangeText={setConfirmPassword}
+          value={confirmPassword}
         />
-        <TouchableOpacity style={styles.button} onPress={() => navigation.replace('Tabs')}>
-          <Text style={styles.buttonText}>Log in</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.footerText} onPress={() => navigation.navigate('Login')}>Already have an account? Login</Text>
+      <Text style={styles.footerText} onPress={() => navigation.navigate('Login')}>
+        Already have an account? Login
+      </Text>
     </View>
   );
 }
@@ -64,7 +128,7 @@ const styles = StyleSheet.create({
   back: {
     fontSize: 20,
     textAlign: 'left',
-    color: 'white'
+    color: 'white',
   },
   logoContainer: {
     alignItems: 'center',
