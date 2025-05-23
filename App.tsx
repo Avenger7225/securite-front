@@ -6,11 +6,11 @@ import AppStack from './navigation/Stack';
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>     
       <UbicacionProvider>
-        <NavigationContainer>
-          <AppStack />
-        </NavigationContainer>
+          <NavigationContainer>
+            <AppStack />
+          </NavigationContainer>
       </UbicacionProvider>
     </GestureHandlerRootView>
   );
