@@ -17,7 +17,8 @@ export default function RegisterScreen({ navigation }: any) {
     }
 
     try {
-      const response = await fetch('http://192.168.0.133:3000/api/register', {
+      // const response = await fetch('http://192.168.0.133:3000/api/register',
+      const response = await fetch('http://192.168.0.12:3000/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -34,21 +35,18 @@ export default function RegisterScreen({ navigation }: any) {
         Alert.alert('Éxito', 'Usuario creado con éxito');
         navigation.replace('Login');
       } else {
-        // --- MODIFICACIÓN CLAVE AQUÍ ---
         let errorMessage = 'Ocurrió un error desconocido';
         if (data && typeof data.error === 'string') {
           errorMessage = data.error;
-        } else if (data && typeof data.detail === 'string') { // Assuming your backend might return 'detail' as a string for errors
+        } else if (data && typeof data.detail === 'string') {
           errorMessage = data.detail;
         } else if (data) {
-          // If data.error or data.detail are objects, stringify the whole data object for debugging
           errorMessage = JSON.stringify(data);
         }
         Alert.alert('Error', errorMessage);
       }
-    } catch (error: any) { // Explicitly type error as any for console.error
+    } catch (error: any) {
       console.error('Error en la conexión o en la solicitud:', error);
-      // For network errors or unexpected exceptions, error might not be an object with .message
       let alertMessage = 'No se pudo conectar con la API';
       if (error && typeof error.message === 'string') {
         alertMessage += `: ${error.message}`;

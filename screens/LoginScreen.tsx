@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text, View, Image, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 
 const logo = require('../assets/securite-logo.jpeg');
@@ -9,7 +10,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://192.168.0.133:3000/login', {
+      const response = await fetch('http://192.168.0.12:3000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -20,11 +21,11 @@ export default function LoginScreen({ navigation }: any) {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Bienvenido', `Hola ${data.username}`);
+        await AsyncStorage.setItem('accessToken', data.accessToken); // Accede al token
+        await AsyncStorage.setItem('refreshToken', data.refreshToken); // refresca el token
+        await AsyncStorage.setItem('user', JSON.stringify(data.user)); // Guardar usuario
 
-        // 💾 Aquí podrías guardar el token si vas a usarlo en futuras peticiones
-        // Por ejemplo con AsyncStorage
-
+        Alert.alert('Bienvenido', `Hola ${data.user.username}`);
         navigation.replace('Tabs');
       } else {
         Alert.alert('Error', data.error || 'Error desconocido');
@@ -58,7 +59,7 @@ export default function LoginScreen({ navigation }: any) {
           value={password}
           onChangeText={setPassword}
         />
-        <TouchableOpacity style={styles.button} onPress={() => navigation.replace('Tabs')}>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
       </View>

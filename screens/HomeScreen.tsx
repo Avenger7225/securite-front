@@ -1,16 +1,39 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, Image } from 'react-native';
 import { UbicacionContext } from '../context/UbicacionContext';
 import MapaWebView from '../components/MapaWebView';
 import { useNavigation } from '@react-navigation/native';
 import { BleManager } from 'react-native-ble-plx';
-import { decode as base64decode } from 'base-64';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const manager = new BleManager();
-
 const photo = require('../assets/images.jpg');
 
 const DispositivosScreen = () => {
+  const [username, setUsername] = useState('');
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUsername(user.username);
+      }
+    };
+
+    loadUser();
+  }, []);
+  
+  return(
+    <View style={styles.screenContent}>
+    <View style={styles.UserPhotoContainer}>
+      <Image source={photo} style={styles.UserPhoto} />
+    </View>
+    <Text style={styles.TitleText}>{username}</Text>
+    <Text style={styles.SubtitleText}>ubicacion {username}</Text>
+  </View>
+  )
+  {/*
   const [message, setMessage] = useState("Esperando mensaje...");
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [ultimoDispositivo, setUltimoDispositivo] = useState<any>(null);
@@ -118,28 +141,13 @@ const DispositivosScreen = () => {
       console.log('Limpiando recursos BLE...');
       manager.stopDeviceScan();
       manager.destroy();
-    };
-  }, []);
-
-  return (
-    <View style={styles.screenContent}>
-      <Text style={styles.SubtitleText}>Mensaje recibido: {message}</Text>
-      <Text style={styles.SubtitleText}>
-        Última actualización: {lastUpdate.toLocaleTimeString()}
-      </Text>
-    </View>
-  );
+    };*/}
+  //};
+  //  [])
 };
 
 // esto iba dentro de dispositivos screen
 // const { message, lastUpdate } = useContext(BluetoothContext);
-  {/*<View style={styles.screenContent}>
-    <View style={styles.UserPhotoContainer}>
-      <Image source={photo} style={styles.UserPhoto} />
-    </View>
-    <Text style={styles.TitleText}>Toñito</Text>
-    <Text style={styles.SubtitleText}>ubicacion Toñito</Text>
-  </View>*/}
   // return(
   //   <View style={styles.screenContent}>
   //     <Text style={styles.SubtitleText}>Mensaje BLE: {message}</Text>
@@ -305,6 +313,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: 'white',
     fontSize: 15,
+    marginLeft: "20%",
   },
   UserPhotoContainer: {
     alignItems: 'center',
