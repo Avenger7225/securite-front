@@ -23,149 +23,36 @@ const DispositivosScreen = () => {
 
     loadUser();
   }, []);
-  
-  return(
+
+  return (
     <View style={styles.screenContent}>
-    <View style={styles.UserPhotoContainer}>
-      <Image source={photo} style={styles.UserPhoto} />
+      <View style={styles.UserPhotoContainer}>
+        <Image source={photo} style={styles.UserPhoto} />
+      </View>
+      <Text style={styles.TitleText}>{username}</Text>
+      <Text style={styles.SubtitleText}>Ubicación: {username}</Text>
     </View>
-    <Text style={styles.TitleText}>{username}</Text>
-    <Text style={styles.SubtitleText}>ubicacion {username}</Text>
-  </View>
-  )
-  {/*
-  const [message, setMessage] = useState("Esperando mensaje...");
-  const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [ultimoDispositivo, setUltimoDispositivo] = useState<any>(null);
-
-  useEffect(() => {
-    const startScan = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        ]);
-        if (
-          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_SCAN']) ||
-          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_CONNECT'])
-        ) {
-          console.warn('Permisos no otorgados');
-          return;
-        }
-      }
-
-      console.log("Iniciando escaneo de dispositivos...");
-      manager.startDeviceScan(null, null, (error, device) => {
-        if (error) {
-          console.error('Error BLE:', error);
-          return;
-        }
-
-        if (device?.name?.includes('Dyson')) {
-          console.log('Dispositivo encontrado:', device.name, device.id);
-          manager.stopDeviceScan();
-          connectToDevice(device);
-        }
-      });
-    };
-
-    const connectToDevice = async (device: any) => {
-      try {
-        console.log('Conectando al dispositivo...');
-        const connectedDevice = await device.connect();
-        console.log('¡Dispositivo conectado!');
-        await connectedDevice.discoverAllServicesAndCharacteristics();
-        console.log('Servicios y características descubiertos');
-        setUltimoDispositivo(connectedDevice); // Guardamos el dispositivo conectado
-        setupNotifications(connectedDevice);
-      } catch (error: any) {
-        console.error('Error de conexión:', error);
-      }
-    };
-
-    const reconectarDispositivo = async (deviceId: string) => {
-      try {
-        console.log(`Intentando reconectar con ${deviceId}...`);
-        const device = await manager.connectToDevice(deviceId, { autoConnect: true });
-        await device.discoverAllServicesAndCharacteristics();
-        console.log('Se reconecto el dispositivo');
-        setUltimoDispositivo(device);
-        setupNotifications(device);
-      } catch (reconnectError) {
-        console.error('Falló la reconexión:', reconnectError);
-      }
-    };
-
-    const setupNotifications = (device: any) => {
-      console.log('Configurando notificaciones...');
-      device.monitorCharacteristicForService(
-        '12345678-1234-1234-1234-1234567890ab',
-        'abcd1234-ab12-cd34-ef56-abcdef123456',
-        (error: any, characteristic: any) => {
-          if (error) {
-            console.error('Error de monitoreo:', error);
-
-            const errorText = error?.message || String(error);
-            if (errorText.includes('was disconnected')) {
-              console.warn('Dispositivo desconectado. esperando conexion...');
-
-              const match = errorText.match(/Device ([A-F0-9:]+)/i);
-              const deviceId = match?.[1] || ultimoDispositivo?.id;
-
-              if (deviceId) {
-                reconectarDispositivo(deviceId);
-              } else {
-                console.warn('No se pudo obtener el ID del dispositivo para reconectar.');
-              }
-            }
-            return;
-          }
-
-          if (characteristic?.value) {
-            try {
-              const decodedMessage = base64decode(characteristic.value);
-              console.log('Mensaje recibido:', decodedMessage);
-              setMessage(decodedMessage);
-              setLastUpdate(new Date());
-            } catch (decodeError) {
-              console.error('Error al decodificar:', decodeError);
-            }
-          }
-        }
-      );
-    };
-
-    startScan();
-
-    return () => {
-      console.log('Limpiando recursos BLE...');
-      manager.stopDeviceScan();
-      manager.destroy();
-    };*/}
-  //};
-  //  [])
+  );
 };
 
-// esto iba dentro de dispositivos screen
-// const { message, lastUpdate } = useContext(BluetoothContext);
-  // return(
-  //   <View style={styles.screenContent}>
-  //     <Text style={styles.SubtitleText}>Mensaje BLE: {message}</Text>
-  //     <Text style={styles.SubtitleText}>Última actualización: {lastUpdate.toLocaleTimeString()}</Text>
-  //   </View>
-  // );
-
+// no terminado ❌
 const PerdidosScreen = () => (
   <View style={styles.screenContent}>
     <Text style={styles.TitleText}>No hay ningún neartag reportado como perdido</Text>
   </View>
 );
 
+// no terminado ❌
 const AgregarScreen = () => (
   <View style={styles.screenContent}>
     <Text style={styles.TitleText}>Pantalla agregar</Text>
   </View>
 );
+
+// no terminado ❌
+const BluetoothScreen = () => {
+  return(<View style={styles.screenContent}></View>)
+}
 
 export default function HomeScreen() {
   const { location } = useContext(UbicacionContext);
