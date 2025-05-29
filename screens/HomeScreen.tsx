@@ -215,33 +215,35 @@ const BluetoothScreen = ({ setActiveScreen }: any) => {
   if (Platform.OS !== 'android') return true; // permisos automáticos en iOS para Bluetooth
 
   const permisosRequeridos = [
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-    ];
+    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+    PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+  ];
+  console.log('permisos requeridos: '+permisosRequeridos);
 
-    const permisosFaltantes = [];
+  const permisosFaltantes = [];
 
-    for (const permiso of permisosRequeridos) {
-      const tienePermiso = await PermissionsAndroid.check(permiso);
-      if (!tienePermiso) permisosFaltantes.push(permiso);
+  for (const permiso of permisosRequeridos) {
+    const tienePermiso = await PermissionsAndroid.check(permiso);
+    if (!tienePermiso) permisosFaltantes.push(permiso);
+  }
+  console.log('permisos faltantes: '+permisosFaltantes);
+
+  if (permisosFaltantes.length === 0) {
+    return true;
+  }
+
+  try {
+    const granted = await PermissionsAndroid.requestMultiple(permisosFaltantes);
+
+    const todosOtorgados = Object.values(granted).every(
+      permiso => permiso === PermissionsAndroid.RESULTS.GRANTED
+    );
+
+    if (!todosOtorgados) {
+      console.warn('Faltan permisos para Bluetooth');
+      return false;
     }
-
-    if (permisosFaltantes.length === 0) {
-      return true;
-    }
-
-    try {
-      const granted = await PermissionsAndroid.requestMultiple(permisosFaltantes);
-
-      const todosOtorgados = Object.values(granted).every(
-        permiso => permiso === PermissionsAndroid.RESULTS.GRANTED
-      );
-
-      if (!todosOtorgados) {
-        console.warn('Faltan permisos para Bluetooth');
-        return false;
-      }
       return true;
 
     } catch (error) {
