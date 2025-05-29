@@ -1,37 +1,40 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
-import { UbicacionContext } from '../context/UbicacionContext';
+import React, { useContext, useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert, Animated } from 'react-native';
+import { useUbicacion } from '../context/UbicacionContext';
 import MapaWebView from '../components/MapaWebView';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TextInput } from 'react-native-gesture-handler';
 import { useBluetooth } from '../context/BluetoothContext';
-import { PermissionsAndroid, Platform } from 'react-native';
 
 const photo = require('../assets/images.jpg');
 
 export default function HomeScreen() {
-  const { location } = useContext(UbicacionContext);
+  const { location } = useUbicacion();
   const [activeScreen, setActiveScreen] = useState('dispositivos');
+  const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [devices, setDevices] = useState<any[]>([]);
   const [macAddress, setMacAddress] = useState('');
   const navigation = useNavigation();
+
   console.log('Ubicación actual:', location);
 
   useEffect(() => {
     if (location) {
       console.log('Ubicación actual:', location.latitude, location.longitude);
-    } else {
-      console.log('Aún no hay ubicación');
     }
   }, [location]);
 
   return (
     <View style={styles.container}>
-      {location ? (
-        <MapaWebView latitude={location.latitude} longitude={location.longitude} />
+      {selectedLocation ? (
+        <MapaWebView
+          key={`${selectedLocation.latitude}-${selectedLocation.longitude}`}
+          latitude={selectedLocation.latitude}
+          longitude={selectedLocation.longitude}
+        />
       ) : (
-        <Text>Obteniendo ubicación...</Text>
+        <Text>Selecciona un dispositivo para ver su ubicación</Text>
       )}
 
       {/* Solo muestra menú si no estamos en bluetooth o agregar */}
@@ -77,6 +80,7 @@ export default function HomeScreen() {
             {activeScreen === 'dispositivos' && (
               <DispositivosScreen
                 setActiveScreen={setActiveScreen}
+                setSelectedLocation={setSelectedLocation}
                 devices={devices}
               />
             )}
@@ -92,13 +96,19 @@ export default function HomeScreen() {
         <View style={styles.menu}>
           <View style={styles.menuContent}>
             {activeScreen === 'bluetooth' && (
-              <BluetoothScreen setActiveScreen={setActiveScreen} />
+              <BluetoothScreen 
+                setActiveScreen={setActiveScreen} 
+                setMacAddress={setMacAddress}
+                macAddress={macAddress}
+              />
             )}
             {activeScreen === 'agregar' && (
               <AgregarScreen
                 setActiveScreen={setActiveScreen}
                 devices={devices}
                 setDevices={setDevices}
+                macAddress={macAddress}
+                location={location}
               />
             )}
           </View>
@@ -115,11 +125,12 @@ type Device = {
   icon: any;
 };
 
-
 // terminado ✅
-const DispositivosScreen = ({ setActiveScreen }: any) => {
+const DispositivosScreen = ({ setActiveScreen , setSelectedLocation}: any) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [username, setUsername] = useState('');
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const { setLocation } = useUbicacion();
 
   useEffect(() => {
     const loadDevices = async () => {
@@ -156,7 +167,7 @@ const DispositivosScreen = ({ setActiveScreen }: any) => {
             setDevices(mappedDevices);
           } else {
             console.warn('No hay dispositivos registrados.');
-            setDevices([]); // Asegura que devices sea un arreglo vacío pa que no haya pedos
+            setDevices([]);
           }
         } else {
           console.error('Error al obtener dispositivos:', data.error || data.message);
@@ -169,30 +180,44 @@ const DispositivosScreen = ({ setActiveScreen }: any) => {
     loadDevices();
   }, []);
 
-  return (
-    <>
-      <ScrollView style={styles.devicesScrollContainer} contentContainerStyle={styles.devicesContentContainer}>
-        {devices.length === 0 ? (
-          <Text style={styles.SubtitleText1}>No hay dispositivos registrados</Text>
-        ) : (
-          devices.map((device: any) => (
-            <View key={device.id} style={styles.deviceItem}>
-              <Image source={device.icon} style={{ width: 40, height: 40, marginRight: 10 }} />
-              <View>
-                <Text style={styles.deviceTitle}>{device.name}</Text>
-                <Text style={styles.deviceSubtitle}>{device.location}</Text>
-              </View>
-            </View>
-          ))
-        )}
-      </ScrollView>
+  const handleDevicePress = (device: Device) => {
+    Animated.sequence([
+      Animated.timing(opacityAnim, {
+        toValue: 0.5,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-      <View>
-        <TouchableOpacity style={styles.addButton} onPress={() => setActiveScreen('bluetooth')}>
-          <Text style={styles.addButtonText}>Agregar</Text>
+    const latLngMatch = device.location.match(/Lat:\s*(-?\d+\.?\d*),\s*Lng:\s*(-?\d+\.?\d*)/);
+    if (latLngMatch) {
+      const latitude = parseFloat(latLngMatch[1]);
+      const longitude = parseFloat(latLngMatch[2]);
+      if (!isNaN(latitude) && !isNaN(longitude)) {
+        setSelectedLocation({ latitude, longitude });
+      }
+    }
+  };
+
+return (
+    <ScrollView>
+      {devices.map((device: Device) => (
+        <TouchableOpacity key={device.id} onPress={() => handleDevicePress(device)}>
+          <Animated.View style={[styles.deviceItem, { opacity: opacityAnim }]}>
+            <Image source={device.icon} style={{ width: 40, height: 40, marginRight: 10 }} />
+            <View>
+              <Text>{device.name}</Text>
+              <Text>{device.location}</Text>
+            </View>
+          </Animated.View>
         </TouchableOpacity>
-      </View>
-    </>
+      ))}
+    </ScrollView>
   );
 };
 
@@ -206,7 +231,7 @@ const PerdidosScreen = ({ setActiveScreen }: any) => {
 };
 
 // terminado ✅
-const BluetoothScreen = ({ setActiveScreen }: any) => {
+const BluetoothScreen = ({ setActiveScreen, setMacAddress }: any) => {
   const { message, lastUpdate } = useBluetooth();
   console.log(message);
   console.log(lastUpdate);
@@ -220,7 +245,10 @@ const BluetoothScreen = ({ setActiveScreen }: any) => {
       <Text style={styles.SubtitleTextDevice}>Última actualización: {lastUpdate.toLocaleTimeString()}</Text>
       <TouchableOpacity 
         style={styles.addButtonbt} 
-        onPress={() => setActiveScreen('agregar', { macAddress: message })}>
+        onPress={() => {
+          setMacAddress(message);
+          setActiveScreen('agregar');
+        }}>
         <Text style={styles.addButtonText}>Agregar</Text>
       </TouchableOpacity>
     </View>
@@ -228,7 +256,7 @@ const BluetoothScreen = ({ setActiveScreen }: any) => {
 };
 
 // no terminado ❌
-const AgregarScreen = ({ setActiveScreen, setDevices, devices, macAddress }: any) => {
+const AgregarScreen = ({ setActiveScreen, setDevices, devices, macAddress, location }: any) => {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(require('../assets/default-icon.png'));
   
@@ -247,11 +275,12 @@ const AgregarScreen = ({ setActiveScreen, setDevices, devices, macAddress }: any
       const deviceData = {
         userId: user.id,
         deviceName: name,
-        macAddress: macAddress, // direccion mac del neartag
+        macAddress: macAddress,
         channel: 1,
-        longitude: 31.8062715,
-        latitude: -116.5907348
+        longitude: location?.longitude,
+        latitude: location?.latitude
       };
+
       console.log(typeof macAddress, macAddress);
 
       const response = await fetch('http://192.168.0.12:3000/assign', {
@@ -306,6 +335,10 @@ const AgregarScreen = ({ setActiveScreen, setDevices, devices, macAddress }: any
         <TouchableOpacity style={styles.uploadrow} onPress={() => {
           // icono del neartag
           setIcon(require('../assets/default-icon.png'));
+          if (!location) {
+            Alert.alert('Error', 'No se pudo obtener la ubicación actual');
+            return;
+          }
         }}>
           <Image source={icon} style={{ width: 30, height: 30 }} />
           <Text style={styles.icontext}>Seleccionar icono</Text>
@@ -496,5 +529,5 @@ const styles = StyleSheet.create({
   },
   devicetext: {
     color: 'white'
-  }
+  },
 });
