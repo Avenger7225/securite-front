@@ -10,7 +10,7 @@ export default function LoginScreen({ navigation }: any) {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://192.168.0.133:3000/login', {
+      const response = await fetch('http://192.168.0.12:3000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

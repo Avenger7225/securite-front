@@ -19,7 +19,7 @@ export default function ProfileScreen() {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
 
-      const response = await fetch('http://192.168.0.133:3000/signOut', {
+      const response = await fetch('http://192.168.0.12:3000/signOut', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +190,7 @@ const ActualizarNombreScreen = ({ setActiveScreen }: any) => {
 
       const { id: userId } = JSON.parse(userData);
 
-      const response = await fetch(`http://192.168.0.133:3000/user/${userId}/username`, {
+      const response = await fetch(`http://192.168.0.12:3000/user/${userId}/username`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -286,7 +286,7 @@ const ActualizarTelefonoScreen = ({ setActiveScreen }: any) => {
       }
       const { id: userId } = JSON.parse(userData);
 
-      const response = await fetch(`http://192.168.0.133:3000/user/${userId}/phone-number`, {
+      const response = await fetch(`http://192.168.0.12:3000/user/${userId}/phone-number`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -394,7 +394,7 @@ const ActualizarCorreoScreen = ({ setActiveScreen }: any) => {
 
       const { id: userId } = JSON.parse(userData);
 
-      const response = await fetch(`http://192.168.0.133:3000/user/${userId}/email`, {
+      const response = await fetch(`http://192.168.0.12:3000/user/${userId}/email`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -499,7 +499,7 @@ const ChangePasswordScreen = ({ setActiveScreen }: any) => {
 
       const { id: userId } = JSON.parse(userData);
 
-      const response = await fetch(`http://192.168.0.133:3000/user/${userId}/password`, {
+      const response = await fetch(`http://192.168.0.12:3000/user/${userId}/password`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -1,22 +1,30 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, Image, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { UbicacionContext } from '../context/UbicacionContext';
 import MapaWebView from '../components/MapaWebView';
 import { useNavigation } from '@react-navigation/native';
-import { BleManager } from 'react-native-ble-plx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { decode as base64decode } from 'base-64';
 import { TextInput } from 'react-native-gesture-handler';
+import { useBluetooth } from '../context/BluetoothContext';
+import { PermissionsAndroid, Platform } from 'react-native';
 
-const manager = new BleManager();
 const photo = require('../assets/images.jpg');
 
 export default function HomeScreen() {
   const { location } = useContext(UbicacionContext);
   const [activeScreen, setActiveScreen] = useState('dispositivos');
   const [devices, setDevices] = useState<any[]>([]);
+  const [macAddress, setMacAddress] = useState('');
   const navigation = useNavigation();
   console.log('Ubicación actual:', location);
+
+  useEffect(() => {
+    if (location) {
+      console.log('Ubicación actual:', location.latitude, location.longitude);
+    } else {
+      console.log('Aún no hay ubicación');
+    }
+  }, [location]);
 
   return (
     <View style={styles.container}>
@@ -126,8 +134,7 @@ const DispositivosScreen = ({ setActiveScreen }: any) => {
 
         console.log(`Consultando dispositivos del usuario: ${user.id}`);
 
-        // router.get('/user/:userId/devices', authMiddleware, getUserDevices); 
-        const response = await fetch(`http://192.168.0.133:3000/user/${user.id}/devices`, {
+        const response = await fetch(`http://192.168.0.12:3000/user/${user.id}/devices`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -181,7 +188,7 @@ const DispositivosScreen = ({ setActiveScreen }: any) => {
       </ScrollView>
 
       <View>
-        <TouchableOpacity style={styles.addButton} onPress={() => setActiveScreen('agregar')}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setActiveScreen('bluetooth')}>
           <Text style={styles.addButtonText}>Agregar</Text>
         </TouchableOpacity>
       </View>
@@ -200,117 +207,64 @@ const PerdidosScreen = ({ setActiveScreen }: any) => {
 
 // terminado ✅
 const BluetoothScreen = ({ setActiveScreen }: any) => {
-  const [message, setMessage] = useState("Esperando mensaje...");
-  const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [ultimoDispositivo, setUltimoDispositivo] = useState<any>(null);
+  const { message, lastUpdate } = useBluetooth();
+  console.log(message);
+  console.log(lastUpdate);
+
+  async function pedirPermisosBluetooth() {
+  if (Platform.OS !== 'android') return true; // permisos automáticos en iOS para Bluetooth
+
+  const permisosRequeridos = [
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+    ];
+
+    const permisosFaltantes = [];
+
+    for (const permiso of permisosRequeridos) {
+      const tienePermiso = await PermissionsAndroid.check(permiso);
+      if (!tienePermiso) permisosFaltantes.push(permiso);
+    }
+
+    if (permisosFaltantes.length === 0) {
+      return true;
+    }
+
+    try {
+      const granted = await PermissionsAndroid.requestMultiple(permisosFaltantes);
+
+      const todosOtorgados = Object.values(granted).every(
+        permiso => permiso === PermissionsAndroid.RESULTS.GRANTED
+      );
+
+      if (!todosOtorgados) {
+        console.warn('Faltan permisos para Bluetooth');
+        return false;
+      }
+      return true;
+
+    } catch (error) {
+      console.error('Error al pedir permisos:', error);
+      return false;
+    }
+  }
 
   useEffect(() => {
-    const startScan = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        ]);
-        if (
-          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_SCAN']) ||
-          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_CONNECT'])
-        ) {
-          console.warn('Permisos no otorgados');
-          return;
-        }
-      }
-
-      console.log("Iniciando escaneo de dispositivos...");
-      manager.startDeviceScan(null, null, (error, device) => {
-        if (error) {
-          console.error('Error BLE:', error);
-          return;
-        }
-
-        if (device?.name?.includes('Dyson')) {
-          console.log('Dispositivo encontrado:', device.name, device.id);
-          manager.stopDeviceScan();
-          connectToDevice(device);
-        }
-      });
-    };
-
-    const connectToDevice = async (device: any) => {
-      try {
-        console.log('Conectando al dispositivo...');
-        const connectedDevice = await device.connect();
-        console.log('¡Dispositivo conectado!');
-        await connectedDevice.discoverAllServicesAndCharacteristics();
-        console.log('Servicios y características descubiertos');
-        setUltimoDispositivo(connectedDevice); // Guardamos el dispositivo conectado
-        setupNotifications(connectedDevice);
-      } catch (error: any) {
-        console.error('Error de conexión:', error);
-      }
-    };
-
-    const reconectarDispositivo = async (deviceId: string) => {
-      try {
-        console.log(`Intentando reconectar con ${deviceId}...`);
-        const device = await manager.connectToDevice(deviceId, { autoConnect: true });
-        await device.discoverAllServicesAndCharacteristics();
-        console.log('Se reconecto el dispositivo');
-        setUltimoDispositivo(device);
-        setupNotifications(device);
-      } catch (reconnectError) {
-        console.error('Falló la reconexión:', reconnectError);
-      }
-    };
-
-    const setupNotifications = (device: any) => {
-      console.log('Configurando notificaciones...');
-      device.monitorCharacteristicForService(
-        '12345678-1234-1234-1234-1234567890ab',
-        'abcd1234-ab12-cd34-ef56-abcdef123456',
-        (error: any, characteristic: any) => {
-          if (error) {
-            console.error('Error de monitoreo:', error);
-
-            const errorText = error?.message || String(error);
-            if (errorText.includes('was disconnected')) {
-              console.warn('Dispositivo desconectado. esperando conexion...');
-
-              const match = errorText.match(/Device ([A-F0-9:]+)/i);
-              const deviceId = match?.[1] || ultimoDispositivo?.id;
-
-              if (deviceId) {
-                reconectarDispositivo(deviceId);
-              } else {
-                console.warn('No se pudo obtener el ID del dispositivo para reconectar.');
-              }
-            }
-            return;
-          }
-
-          if (characteristic?.value) {
-            try {
-              const decodedMessage = base64decode(characteristic.value);
-              console.log('Mensaje recibido:', decodedMessage);
-              setMessage(decodedMessage);
-              setLastUpdate(new Date());
-            } catch (decodeError) {
-              console.error('Error al decodificar:', decodeError);
-            }
-          }
-        }
-      );
-    }
-      startScan();
+    pedirPermisosBluetooth();
   }, []);
 
-  return(
+
+  return (
     <View style={styles.screenContent}>
       <TouchableOpacity onPress={() => setActiveScreen('dispositivos')}>
         <Text style={styles.BackButton2}> x </Text>
       </TouchableOpacity>
       <Text style={styles.SubtitleTextDevice}>Mensaje BLE: {message}</Text>
       <Text style={styles.SubtitleTextDevice}>Última actualización: {lastUpdate.toLocaleTimeString()}</Text>
-      <TouchableOpacity style={styles.addButtonbt} onPress={() => setActiveScreen('agregar')}>
+      <TouchableOpacity 
+        style={styles.addButtonbt} 
+        onPress={() => setActiveScreen('agregar', { macAddress: message })}>
         <Text style={styles.addButtonText}>Agregar</Text>
       </TouchableOpacity>
     </View>
@@ -318,7 +272,7 @@ const BluetoothScreen = ({ setActiveScreen }: any) => {
 };
 
 // no terminado ❌
-const AgregarScreen = ({ setActiveScreen, setDevices, devices }: any) => {
+const AgregarScreen = ({ setActiveScreen, setDevices, devices, macAddress }: any) => {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(require('../assets/default-icon.png'));
   
@@ -337,13 +291,14 @@ const AgregarScreen = ({ setActiveScreen, setDevices, devices }: any) => {
       const deviceData = {
         userId: user.id,
         deviceName: name,
-        macAddress: '00:11:22:33:44:55', // Reemplazar por la MAC real
+        macAddress: macAddress, // direccion mac del neartag
         channel: 1,
-        longitude: 31.8062715, // Reemplazar con datos reales
-        latitude: -116.5907348 // Reemplazar con datos reales
+        longitude: 31.8062715,
+        latitude: -116.5907348
       };
+      console.log(typeof macAddress, macAddress);
 
-      const response = await fetch('http://192.168.0.133:3000/devices/assign', {
+      const response = await fetch('http://192.168.0.12:3000/assign', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -355,11 +310,20 @@ const AgregarScreen = ({ setActiveScreen, setDevices, devices }: any) => {
       const result = await response.json();
 
       if (!response.ok) {
-        Alert.alert('Error', result.error || 'No se pudo asignar el dispositivo');
+        let errorMessage = 'No se pudo asignar el dispositivo';
+
+        if (result?.error) {
+          if (typeof result.error === 'string') {
+            errorMessage = result.error;
+          } else if (typeof result.error === 'object') {
+            errorMessage = JSON.stringify(result.error);
+          }
+        }
+
+        Alert.alert('Error', errorMessage);
         return;
       }
 
-      // Si se registró correctamente, lo agregamos a la lista local
       const newDevice = {
         id: Date.now(),
         name,
