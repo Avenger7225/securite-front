@@ -9,6 +9,114 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 const photo = require('../assets/images.jpg');
 
+export default function ProfileScreen() {
+  const { location } = useContext(UbicacionContext);
+  const [activeScreen, setActiveScreen] = useState('user');
+  const navigation = useNavigation();
+  console.log('Ubicación actual:', location);
+
+  const handleSignOut = async () => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+
+      const response = await fetch('http://192.168.0.133:3000/signOut', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Éxito', data.message || 'Sesión cerrada exitosamente');
+        await AsyncStorage.removeItem('user'); // Elimina los datos del usuario
+        await AsyncStorage.removeItem('accessToken'); // Elimina el token JWT
+        await AsyncStorage.removeItem('refreshToken');
+
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          })
+        );
+      } else {
+
+        Alert.alert('Error', data.error || 'Ocurrió un error al cerrar sesión.');
+        console.error('Error al cerrar sesión:', data);
+      }
+    } catch (error) {
+      console.error('Error de red o desconocido al cerrar sesión:', error);
+      Alert.alert('Error', 'No se pudo conectar al servidor. Intenta de nuevo.');
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      {location ? (
+        <MapaWebView latitude={location.latitude} longitude={location.longitude} />
+      ) : (
+        <Text>Obteniendo ubicación...</Text>
+      )}
+
+      <View style={styles.menu}>
+          <View style={styles.menuContent}>
+            <View style={styles.menuContent}>
+              {activeScreen === 'user' && <UserScreen />}
+              {activeScreen === 'actualizar' && <ActualizarDatosScreen />}
+              {activeScreen === 'nombre' && <ActualizarNombreScreen setActiveScreen={setActiveScreen} />}
+              {activeScreen === 'telefono' && <ActualizarTelefonoScreen setActiveScreen={setActiveScreen} />}
+              {activeScreen === 'correo' && <ActualizarCorreoScreen setActiveScreen={setActiveScreen} />}
+              {activeScreen === 'password' && <ChangePasswordScreen setActiveScreen={setActiveScreen} />}
+              {activeScreen === 'recover' && <RecoverPasswordScreen setActiveScreen={setActiveScreen} />}
+              {activeScreen === 'user' && (
+                <>
+                <TouchableOpacity style={styles.addButton} onPress={() => setActiveScreen('actualizar')}>
+                  <Text style={styles.addButtonText}>Actualizar Datos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.addButton} onPress={handleSignOut}>
+                <Text style={styles.addButtonText}>Cerrar sesion</Text>
+                </TouchableOpacity>
+                </>
+              )}
+              {activeScreen === 'actualizar' && (
+                <>
+                <TouchableOpacity onPress={() => setActiveScreen('user')}>
+                    <Text style={styles.BackButton}> x </Text>
+                </TouchableOpacity>
+                <View style={styles.UserPhotoContainer}>
+                  <Image source={photo} style={styles.UserPhoto} />
+                  <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('password')}>
+                    <Text style={styles.TextButtonText}>Cambiar foto</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('nombre')}>
+                  <Text style={styles.TextButtonTextElement}>Nombre de usuario</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('telefono')}>
+                  <Text style={styles.TextButtonTextElement}>Numero de telefono</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('correo')}>
+                  <Text style={styles.TextButtonTextElement}>Correo</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.OText}>-------- o ---------</Text>
+
+                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('password')}>
+                  <Text style={styles.TextButtonText}>Cambiar mi contraseña</Text>
+                </TouchableOpacity>
+                </>
+              )}
+          </View>
+          </View>
+        </View>
+      </View>
+  );
+}
+
+
 // terminado ✅
 const UserScreen = () => { // recordatorio: usar llaves pa que no chille con los hooks xd
   const [username, setUsername] = useState('');
@@ -115,7 +223,7 @@ const ActualizarNombreScreen = ({ setActiveScreen }: any) => {
   return(
     <View style={styles.Container}>
       <TouchableOpacity onPress={() => setActiveScreen('actualizar')}>
-      <Text style={styles.BackButton3}> x </Text>
+      <Text style={styles.BackButton5}> x </Text>
       </TouchableOpacity>
       <View>
         <Text style={styles.SubtitleText}>Cambia tu nombre actual: {username}</Text>
@@ -423,6 +531,9 @@ const ChangePasswordScreen = ({ setActiveScreen }: any) => {
   return (
     <>
       <View style={styles.screenContent}>
+        <TouchableOpacity onPress={() => setActiveScreen('actualizar')}>{/*hgdhgdhgdghdhgdhgdhdhdhdhdhdhdfh */}
+          <Text style={styles.BackButton4}> x </Text>
+        </TouchableOpacity>
         <View style={styles.UserPhotoContainer01}>
           <Image source={photo} style={styles.UserPhoto01} />
         </View>
@@ -515,115 +626,6 @@ const RecoverPasswordScreen = ({ setActiveScreen }: any) => {
       </TouchableOpacity>
   </View>)
 };
-
-export default function ProfileScreen() {
-  const { location } = useContext(UbicacionContext);
-  const [activeScreen, setActiveScreen] = useState('user');
-  const navigation = useNavigation();
-  console.log('Ubicación actual:', location);
-
-  const handleSignOut = async () => {
-    try {
-      const accessToken = await AsyncStorage.getItem('accessToken');
-
-      const response = await fetch('http://192.168.0.133:3000/signOut', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        Alert.alert('Éxito', data.message || 'Sesión cerrada exitosamente');
-        await AsyncStorage.removeItem('user'); // Elimina los datos del usuario
-        await AsyncStorage.removeItem('accessToken'); // Elimina el token JWT
-        await AsyncStorage.removeItem('refreshToken');
-
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          })
-        );
-      } else {
-
-        Alert.alert('Error', data.error || 'Ocurrió un error al cerrar sesión.');
-        console.error('Error al cerrar sesión:', data);
-      }
-    } catch (error) {
-      console.error('Error de red o desconocido al cerrar sesión:', error);
-      Alert.alert('Error', 'No se pudo conectar al servidor. Intenta de nuevo.');
-    }
-  }
-
-  
-
-  return (
-    <View style={styles.container}>
-      {location ? (
-        <MapaWebView latitude={location.latitude} longitude={location.longitude} />
-      ) : (
-        <Text>Obteniendo ubicación...</Text>
-      )}
-
-      <View style={styles.menu}>
-          <View style={styles.menuContent}>
-            <View style={styles.menuContent}>
-              {activeScreen === 'user' && <UserScreen />}
-              {activeScreen === 'actualizar' && <ActualizarDatosScreen />}
-              {activeScreen === 'nombre' && <ActualizarNombreScreen setActiveScreen={setActiveScreen} />}
-              {activeScreen === 'telefono' && <ActualizarTelefonoScreen setActiveScreen={setActiveScreen} />}
-              {activeScreen === 'correo' && <ActualizarCorreoScreen setActiveScreen={setActiveScreen} />}
-              {activeScreen === 'password' && <ChangePasswordScreen setActiveScreen={setActiveScreen} />}
-              {activeScreen === 'recover' && <RecoverPasswordScreen setActiveScreen={setActiveScreen} />}
-              {activeScreen === 'user' && (
-                <>
-                <TouchableOpacity style={styles.addButton} onPress={() => setActiveScreen('actualizar')}>
-                  <Text style={styles.addButtonText}>Actualizar Datos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.addButton} onPress={handleSignOut}>
-                <Text style={styles.addButtonText}>Cerrar sesion</Text>
-                </TouchableOpacity>
-                </>
-              )}
-              {activeScreen === 'actualizar' && (
-                <>
-                <TouchableOpacity onPress={() => setActiveScreen('user')}>
-                    <Text style={styles.BackButton}> x </Text>
-                </TouchableOpacity>
-                <View style={styles.UserPhotoContainer}>
-                  <Image source={photo} style={styles.UserPhoto} />
-                  <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('password')}>
-                    <Text style={styles.TextButtonText}>Cambiar foto</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('nombre')}>
-                  <Text style={styles.TextButtonTextElement}>Nombre de usuario</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('telefono')}>
-                  <Text style={styles.TextButtonTextElement}>Numero de telefono</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('correo')}>
-                  <Text style={styles.TextButtonTextElement}>Correo</Text>
-                </TouchableOpacity>
-
-                <Text style={styles.OText}>-------- o ---------</Text>
-
-                <TouchableOpacity style={styles.TextButton} onPress={() => setActiveScreen('password')}>
-                  <Text style={styles.TextButtonText}>Cambiar mi contraseña</Text>
-                </TouchableOpacity>
-                </>
-              )}
-          </View>
-          </View>
-        </View>
-      </View>
-  );
-}
 
 const styles = StyleSheet.create({
   Container: {
@@ -855,6 +857,26 @@ const styles = StyleSheet.create({
     fontSize: 20,
     alignItems: 'center',
   },
+  BackButton4: {
+    marginTop: "-10%",
+    marginBottom: "-100%",
+    marginLeft: "90%",
+    color: 'white',
+    borderRadius: 10,
+    paddingVertical: 16,
+    fontSize: 20,
+    alignItems: 'center',
+  },
+  BackButton5: {
+    marginTop: "-18%",
+    marginBottom: "-100%",
+    marginLeft: "90%",
+    color: 'white',
+    borderRadius: 10,
+    paddingVertical: 16,
+    fontSize: 20,
+    alignItems: 'center',
+  },
   TextButtonText: {
     textAlign: 'center',
     textDecorationLine: 'underline',
@@ -875,14 +897,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: -15,
   },
-  UserPhotoContainer: { //////////////////dshagjhsgajdhgajhsgdjhgashj
+  UserPhotoContainer: {
     width: 100,
     height: 100,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: '2%',
   },
-  UserPhotoContainer01: { //////////////////dshagjhsgajdhgajhsgdjhgashj
+  UserPhotoContainer01: { 
     width: "50%",
     height: "60%",
     alignItems: 'center',

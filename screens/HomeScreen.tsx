@@ -190,11 +190,13 @@ const DispositivosScreen = ({ setActiveScreen }: any) => {
 };
 
 // terminado ✅
-const PerdidosScreen = () => (
-  <View style={styles.screenContent}>
-    <Text style={styles.SubtitleText}>No hay ningún neartag reportado como perdido</Text>
-  </View>
-);
+const PerdidosScreen = ({ setActiveScreen }: any) => {
+  return(
+    <View style={styles.screenContent}>
+      <Text style={styles.SubtitleText}>No hay ningún neartag reportado como perdido</Text>
+    </View>
+  )
+};
 
 // terminado ✅
 const BluetoothScreen = ({ setActiveScreen }: any) => {
