@@ -211,52 +211,6 @@ const BluetoothScreen = ({ setActiveScreen }: any) => {
   console.log(message);
   console.log(lastUpdate);
 
-  async function pedirPermisosBluetooth() {
-  if (Platform.OS !== 'android') return true; // permisos automáticos en iOS para Bluetooth
-
-  const permisosRequeridos = [
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-    PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-  ];
-  console.log('permisos requeridos: '+permisosRequeridos);
-
-  const permisosFaltantes = [];
-
-  for (const permiso of permisosRequeridos) {
-    const tienePermiso = await PermissionsAndroid.check(permiso);
-    if (!tienePermiso) permisosFaltantes.push(permiso);
-  }
-  console.log('permisos faltantes: '+permisosFaltantes);
-
-  if (permisosFaltantes.length === 0) {
-    return true;
-  }
-
-  try {
-    const granted = await PermissionsAndroid.requestMultiple(permisosFaltantes);
-
-    const todosOtorgados = Object.values(granted).every(
-      permiso => permiso === PermissionsAndroid.RESULTS.GRANTED
-    );
-
-    if (!todosOtorgados) {
-      console.warn('Faltan permisos para Bluetooth');
-      return false;
-    }
-      return true;
-
-    } catch (error) {
-      console.error('Error al pedir permisos:', error);
-      return false;
-    }
-  }
-
-  useEffect(() => {
-    pedirPermisosBluetooth();
-  }, []);
-
-
   return (
     <View style={styles.screenContent}>
       <TouchableOpacity onPress={() => setActiveScreen('dispositivos')}>

@@ -1,5 +1,5 @@
 import React, { useContext, createContext, useEffect, useRef, useState } from 'react';
-import { Text, View, PermissionsAndroid, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { BleManager } from 'react-native-ble-plx';
 import { decode as base64decode } from 'base-64';
 
@@ -86,20 +86,7 @@ export const BluetoothProvider = ({ children }: { children: React.ReactNode }) =
 
   useEffect(() => {
     const iniciarBluetooth = async () => {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-        ]);
-        if (
-          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_SCAN']) ||
-          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_CONNECT'])
-        ) {
-          console.warn('Permisos no otorgados');
-          return;
-        }
-      }
-
+      // Asumimos que los permisos ya fueron concedidos desde App.tsx
       const connectedDevices = await manager.connectedDevices([]);
       const dysonDevice = connectedDevices.find(dev => dev.name?.includes('Dyson'));
 
@@ -141,6 +128,11 @@ export const BluetoothProvider = ({ children }: { children: React.ReactNode }) =
       {children}
     </BluetoothContext.Provider>
   );
-}
+};
 
 export const useBluetooth = () => useContext(BluetoothContext);
+
+/*
+!['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_SCAN']) ||
+          !['never_ask_again', 'granted'].includes(granted['android.permission.BLUETOOTH_CONNECT'])
+*/
